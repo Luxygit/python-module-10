@@ -29,8 +29,13 @@ def spell_reducer(spells: list[int], operation: str) -> int:
             "min": min
             }
     if operation not in operations:
-        raise ValueError(f"Unknown magical operations: {operation}")
-    return functools.reduce(operations[operation], spells)
+        print(f"Unknown magical operation: {operation}")
+        return 0
+    try:
+        return functools.reduce(operations[operation], spells)
+    except TypeError as e:
+        print(f"Reducer error: {e}")
+        return 0
 
 
 def partial_enchanter(base_enchantment: Callable) -> dict[str, Callable]:
@@ -56,11 +61,10 @@ def memoized_fibonacci(n: int) -> int:
     """
     lru_cache intercepts recursive function entries
     if n is solved previously, execution is intercepted and
-    returns the integer from an in-momeory dictionary
+    returns the integer from an in-memory dictionary
     """
-
     if n < 0:
-        raise ValueError("Sequence indices cannot be negative integers.")
+        return 0
     if n == 0:
         return 0
     if n == 1:
@@ -74,7 +78,6 @@ def spell_dispatcher() -> Callable[[Any], str]:
     - .singledispatch sets up a base function block
     - .register registers type-specific variant blocks
     """
-
     @functools.singledispatch
     def dispatcher(spell: Any) -> str:
         # fallback message
@@ -103,22 +106,34 @@ def base_enchantment_template(power: int, element: str, target: str) -> str:
 
 
 def main() -> None:
-    print("\nTesting spell reducer...")
-    sample_powers = [10, 20, 30, 40]
-    print(f"Sum: {spell_reducer(sample_powers, 'add')}")
-    print(f"Product: {spell_reducer(sample_powers, 'multiply')}")
-    print(f"Max: {spell_reducer(sample_powers, 'max')}")
-    print("\nTesting memoized fibonacci...")
-    print(f"Fib(0): {memoized_fibonacci(0)}")
-    print(f"Fib(1): {memoized_fibonacci(1)}")
-    print(f"Fib(10): {memoized_fibonacci(10)}")
-    print(f"Fib(15): {memoized_fibonacci(15)}")
-    print("\nTesting spell dispatcher...")
-    dispatch = spell_dispatcher()
-    print(dispatch(42))
-    print(dispatch("fireball"))
-    print(dispatch([1, 2, 3]))
-    print(dispatch(3.14))
+    try:
+        print("\nTesting spell reducer...")
+        sample_powers = [10, 20, 30, 40]
+        print(f"Sum: {spell_reducer(sample_powers, 'add')}")
+        print(f"Product: {spell_reducer(sample_powers, 'multiply')}")
+        print(f"Max: {spell_reducer(sample_powers, 'max')}")
+        print(f"Min: {spell_reducer(sample_powers, 'min')}")
+
+        print("\nTesting partial enchanter...")
+        factories = partial_enchanter(base_enchantment_template)
+        print(factories["fire"]("Goblin"))
+        print(factories["ice"]("Dragon"))
+        print(factories["lightning"]("Orc"))
+
+        print("\nTesting memoized fibonacci...")
+        print(f"Fib(0): {memoized_fibonacci(0)}")
+        print(f"Fib(1): {memoized_fibonacci(1)}")
+        print(f"Fib(10): {memoized_fibonacci(10)}")
+        print(f"Fib(15): {memoized_fibonacci(15)}")
+
+        print("\nTesting spell dispatcher...")
+        dispatch = spell_dispatcher()
+        print(dispatch(42))
+        print(dispatch("fireball"))
+        print(dispatch([1, 2, 3]))
+        print(dispatch(3.14))
+    except Exception as e:
+        print(f"Error: {e}")
 
 
 if __name__ == "__main__":

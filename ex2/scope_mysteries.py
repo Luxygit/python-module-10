@@ -33,8 +33,12 @@ def spell_accumulator(initial_power: int) -> Callable[[int], int]:
 
     def accumulator(power: int) -> int:
         nonlocal total_power
-        total_power += power
-        return total_power
+        try:
+            total_power += power
+            return total_power
+        except Exception as e:
+            print(f"Error {e}")
+            return 0
     return accumulator
 
 
@@ -53,20 +57,28 @@ def memory_vault() -> dict[str, Callable]:
     """
     emulates private storage using a hidden dictionary
     - vault is the local dict only touched by the inner functions
-    - outer function returns both inner grouped in adict allowing
+    - outer function returns both inner grouped in a dict allowing
     external code to modify and read internal states
     """
     vault: dict[str, int] = {}
 
     def store(key: str, value: int) -> None:
         """nonlocal not needed since dict is mutated"""
-        vault[key] = value
+        try:
+            vault[key] = value
+        except Exception as e:
+            print(f"Error: {e}")
 
     def recall(key: str) -> int | str:
         """safe lookup"""
-        if key in vault:
-            return vault[key]
-        return "Memory not found"
+        try:
+            clean_key = str(key)
+            if clean_key in vault:
+                return vault[clean_key]
+            return "Memory not found"
+        except Exception as e:
+            print(f"Error: {e}")
+            return "Memory not found"
     return {
             "store": store,
             "recall": recall
@@ -74,30 +86,33 @@ def memory_vault() -> dict[str, Callable]:
 
 
 def main() -> None:
-    print("Testing mage counter...")
-    counter_a = mage_counter()
-    counter_b = mage_counter()
-    print(f"counter_a call 1: {counter_a()}")
-    print(f"counter_a call 2: {counter_a()}")
-    print(f"counter_a call 1: {counter_b()}")
+    try:
+        print("Testing mage counter...")
+        counter_a = mage_counter()
+        counter_b = mage_counter()
+        print(f"counter_a call 1: {counter_a()}")
+        print(f"counter_a call 2: {counter_a()}")
+        print(f"counter_b call 1: {counter_b()}")
 
-    print("\nTesting spell accumulator...")
-    accumulator = spell_accumulator(100)
-    print(f"Base 100, add 20: {accumulator(20)}")
-    print(f"Base 100, add 30: {accumulator(30)}")
+        print("\nTesting spell accumulator...")
+        accumulator = spell_accumulator(100)
+        print(f"Base 100, add 20: {accumulator(20)}")
+        print(f"Base 100, add 30: {accumulator(30)}")
 
-    print("\nTesting enchantment factory...")
-    fire_factory = enchantment_factory("Flaming")
-    ice_factory = enchantment_factory("Frozen")
-    print(fire_factory("Sword"))
-    print(ice_factory("Shield"))
+        print("\nTesting enchantment factory...")
+        fire_factory = enchantment_factory("Flaming")
+        ice_factory = enchantment_factory("Frozen")
+        print(fire_factory("Sword"))
+        print(ice_factory("Shield"))
 
-    print("\nTesting memory vault...")
-    vault = memory_vault()
-    print("Store 'secret' = 42")
-    vault["store"]("secret", 42)
-    print(f"Recall 'secret': {vault['recall']('secret')}")
-    print(f"Recall 'unknown': {vault['recall']('unknown')}")
+        print("\nTesting memory vault...")
+        vault = memory_vault()
+        print("Store 'secret' = 42")
+        vault["store"]("secret", 42)
+        print(f"Recall 'secret': {vault['recall']('secret')}")
+        print(f"Recall 'unknown': {vault['recall']('unknown')}")
+    except Exception as e:
+        print(f"Error: {e}")
 
 
 if __name__ == "__main__":

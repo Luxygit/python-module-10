@@ -2,7 +2,7 @@
 functools.wraps makes it so that even if when a decorator wraps a
 function and overrides its name and dosctring, .wraps copies the original
 onto the wrapper so it can be read
-decorator factories for when a decorator needs its own arguments
+decorator factories are use when a decorator needs its own arguments
 @staticmethod defines a method that doesnt access any class instance state
 (no self nor cls params)
 """
@@ -38,23 +38,25 @@ def power_validator(min_power: int) -> Callable:
     mid layer: decorator, gets targeted func
     inner layer: wrapper. gets runtime func call *args
     """
-
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            """args[0] is self, so power integer is grabbed thru length"""
-            if len(args) > 1 and hasattr(args[0], 'cast_spell'):
+            if "power" in kwargs:
+                power = kwargs["power"]
+            elif len(args) > 2:
                 power = args[2]
-            else:
+            elif len(args) > 0:
                 power = args[0]
+            else:
+                return "Insufficient power for this spell"
             if power >= min_power:
                 return func(*args, **kwargs)
-            return "Insuficcient power for this spell"
+            return "Insufficient power for this spell"
         return wrapper
     return decorator
 
 
-def retr_spell(max_attempts: int) -> Callable:
+def retry_spell(max_attempts: int) -> Callable:
     """
     decorator factory tries execution multiple times if errors occur
     loops thru try/except until max_attempts
@@ -79,7 +81,7 @@ def retr_spell(max_attempts: int) -> Callable:
 
 
 class MageGuild:
-    """namespace with validation policies and deplloyment"""
+    """namespace with validation policies and deployment"""
     @staticmethod
     def validate_mage_name(name: str) -> bool:
         """it lacks an instance. validates name"""
@@ -104,25 +106,44 @@ def fireball_spell() -> str:
 
 
 def main() -> None:
-    print("Testing spell timer...")
-    timer_result = fireball_spell()
-    print(f"Result: {timer_result}")
-    print("\nTesting retrying spell...")
+    try:
+        print("Testing spell timer...")
+        timer_result = fireball_spell()
+        print(f"Result: {timer_result}")
 
-    @retr_spell(max_attempts=3)
-    def unstable_spell() -> str:
-        raise ValueError("Magical volatily anomaly detected!")
-    retry_result = unstable_spell()
-    print(retry_result)
-    print("Waaaaaaagh spelled !")
+        print("\nTesting retrying spell...")
+        attempt_counter = 0
 
-    print("\nTesting MageGuild...")
-    guild = MageGuild()
-    print(MageGuild.validate_mage_name("Gandalf The Grey"))
-    print(MageGuild.validate_mage_name("JI"))
+        @retry_spell(max_attempts=3)
+        def unstable_spell() -> str:
+            raise ValueError("Unstable spell")
 
-    print(guild.cast_spell("Lightning", 15))
-    print(guild.cast_spell("Lightning", 5))
+        @retry_spell(max_attempts=3)
+        def flux_spell() -> str:
+            nonlocal attempt_counter
+            attempt_counter += 1
+            if attempt_counter < 2:
+                raise ValueError("Error")
+            return "Cast succesfull!"
+        print("Failure case:")
+        print(f"{unstable_spell()}")
+        print("Sucessful case:")
+        print(f"{flux_spell()}")
+
+        print("\nTesting MageGuild...")
+        print("Valid name 'Gandalf'?: "
+              f"{MageGuild.validate_mage_name('Gandalf')}")
+        print("Valid name 'J1'?: "
+              f"{MageGuild.validate_mage_name('JI')}")
+
+        print("\nTesting power validator...")
+        guild = MageGuild()
+        print(guild.cast_spell("Lightning", 15))
+        print(guild.cast_spell("Lightning", 5))
+        print(f"Keyword Call: {guild.cast_spell(spell_name='Fire', power=20)}")
+        print(f"Keyword Call: {guild.cast_spell(spell_name='Water', power=9)}")
+    except Exception as e:
+        print(f"Error: {e}")
 
 
 if __name__ == "__main__":
